@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres
+    container_name: postgres-stimuler
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "stimuler", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend-stimuler
+    ports:
+      - "80:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+
+volumes:
+  postgres-data:
